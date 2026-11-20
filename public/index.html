@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>8×8×8 3D Sudoku</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <h1>8×8×8 3D Sudoku <small class="version-tag">v1.4.0</small></h1>
+      <span id="solved-badge" class="badge hidden">Solved</span>
+    </div>
+
+    <form id="puzzle-form" class="puzzle-controls">
+      <label for="puzzle-input">Puzzle #</label>
+      <input id="puzzle-input" type="number" min="1" max="2147483647" value="1" required />
+      <button type="submit">Load</button>
+      <button id="reset-btn" type="button" class="btn-danger">Reset</button>
+    </form>
+
+    <div class="status-panel">
+      <div class="counter">
+        Incorrect Constraints: <strong id="invalid-count">—</strong> / 256
+      </div>
+      <div id="plane-info" class="plane-info">Active Plane: XY (Z=1)</div>
+      <div id="mode-indicator" class="mode-pill">Mode: Entry</div>
+    </div>
+  </header>
+
+  <main class="stage">
+    <canvas id="cube-canvas"></canvas>
+
+    <div class="touch-keypad keypad-left" aria-label="Navigation and mode keypad">
+      <button type="button" data-action="q">Q</button>
+      <button type="button" data-action="w">W</button>
+      <button type="button" data-action="e">E</button>
+      <button type="button" data-action="a">A</button>
+      <button type="button" data-action="s">S</button>
+      <button type="button" data-action="d">D</button>
+      <button type="button" data-action="z" id="btn-mode-z" class="mode-btn">Z</button>
+      <button type="button" data-action="x">X</button>
+      <button type="button" data-action="c">C</button>
+    </div>
+
+    <div class="touch-keypad keypad-right" aria-label="Number pad">
+      <button type="button" data-digit="1">1</button>
+      <button type="button" data-digit="2">2</button>
+      <button type="button" data-digit="3">3</button>
+      <button type="button" data-digit="4">4</button>
+      <button type="button" data-digit="5">5</button>
+      <button type="button" data-digit="6">6</button>
+      <button type="button" data-digit="7">7</button>
+      <button type="button" data-digit="8">8</button>
+      <button type="button" data-digit="0">0</button>
+    </div>
+
+    <div id="loading-overlay" class="overlay hidden">
+      <div class="modal">
+        <p id="loading-text">Generating puzzle...</p>
+      </div>
+    </div>
+    <div id="solved-modal" class="overlay hidden">
+      <div class="modal solved-box">
+        <h2>Solved!</h2>
+        <p id="solved-message">You solved Puzzle #1 with all 256 constraints satisfied.</p>
+        <button id="close-solved-btn" type="button">Continue</button>
+      </div>
+    </div>
+    <div id="reset-modal" class="overlay hidden">
+      <div class="modal reset-box">
+        <h2>Reset Puzzle?</h2>
+        <p id="reset-message">Erase all your entries and candidates for Puzzle #1?</p>
+        <div class="modal-actions">
+          <button id="cancel-reset-btn" type="button" class="btn-secondary">Cancel</button>
+          <button id="confirm-reset-btn" type="button" class="btn-danger">Confirm Reset</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="controls-bar">
+    <span><strong>Rotate:</strong> Right-Drag or Shift+Drag</span>
+    <span><strong>Select:</strong> Left-Click (Active Plane)</span>
+    <span><strong>Move Plane:</strong> W A S D</span>
+    <span id="depth-legend"><strong>Move Depth:</strong> Q (Closer) / E (Farther)</span>
+    <span><strong>Edit:</strong> 1–8, X/0 to Clear, Z/Shift for Candidates</span>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

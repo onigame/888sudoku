@@ -1,0 +1,10 @@
+{
+  "name": "888sudoku",
+  "version": "1.4.0",
+  "description": "8x8x8 3D Sudoku Webapp with DLX puzzle generator",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node test/dlx.test.js"
+  }
+}

@@ -1,0 +1,338 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #0b0f17;
+  color: #e6edf7;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 18px;
+  background: #121826;
+  border-bottom: 1px solid #243047;
+  flex-wrap: wrap;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brand h1 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.version-tag {
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: #9fb0cc;
+  margin-left: 4px;
+}
+
+.badge {
+  background: #16a34a;
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  text-transform: uppercase;
+}
+
+.puzzle-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.puzzle-controls label {
+  font-size: 0.9rem;
+  color: #9fb0cc;
+}
+
+.puzzle-controls input {
+  width: 96px;
+  padding: 5px 8px;
+  border-radius: 6px;
+  border: 1px solid #32425e;
+  background: #0b0f17;
+  color: #e6edf7;
+  font-size: 0.9rem;
+}
+
+.puzzle-controls button,
+.solved-box button {
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: none;
+  background: #2563eb;
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.puzzle-controls button:hover,
+.solved-box button:hover {
+  background: #1d4ed8;
+}
+
+.puzzle-controls button.btn-danger,
+.modal button.btn-danger {
+  background: #dc2626;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.puzzle-controls button.btn-danger:hover,
+.modal button.btn-danger:hover {
+  background: #b91c1c;
+}
+
+.modal button.btn-secondary {
+  background: #334155;
+  color: #e6edf7;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.modal button.btn-secondary:hover {
+  background: #475569;
+}
+
+.reset-box h2 {
+  font-size: 1.4rem;
+  color: #f87171;
+  margin-bottom: 10px;
+}
+
+.reset-box p {
+  color: #cbd5e1;
+  margin-bottom: 18px;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.modal-actions button {
+  padding: 7px 16px;
+  font-size: 0.9rem;
+}
+
+.status-panel {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 0.9rem;
+}
+
+.counter strong {
+  color: #fbbf24;
+  font-variant-numeric: tabular-nums;
+}
+
+.counter.complete strong {
+  color: #4ade80;
+}
+
+.plane-info {
+  color: #9fb0cc;
+  font-variant-numeric: tabular-nums;
+}
+
+.stage {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
+
+#cube-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: crosshair;
+  touch-action: none;
+}
+
+.mode-pill {
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  background: #1e293b;
+  color: #38bdf8;
+  border: 1px solid #334155;
+}
+
+.mode-pill.candidate {
+  background: rgba(250, 204, 21, 0.16);
+  color: #fde047;
+  border-color: rgba(250, 204, 21, 0.6);
+}
+
+.touch-keypad {
+  position: absolute;
+  bottom: 12px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  z-index: 5;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.keypad-left {
+  left: 12px;
+}
+
+.keypad-right {
+  right: 12px;
+}
+
+.touch-keypad button {
+  width: clamp(38px, 10vw, 48px);
+  height: clamp(38px, 10vw, 48px);
+  border-radius: 8px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: rgba(18, 24, 38, 0.82);
+  color: #e6edf7;
+  font-size: clamp(0.9rem, 3vw, 1.05rem);
+  font-weight: 700;
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+  touch-action: manipulation;
+}
+
+.touch-keypad button:active {
+  background: rgba(56, 189, 248, 0.3);
+}
+
+.touch-keypad button.mode-btn.active {
+  background: rgba(250, 204, 21, 0.25);
+  border-color: #facc15;
+  color: #fde047;
+}
+
+@media (max-width: 640px) {
+  .topbar {
+    padding: 8px 10px;
+    gap: 8px;
+  }
+
+  .brand h1 {
+    font-size: 0.95rem;
+  }
+
+  .puzzle-controls input {
+    width: 68px;
+    padding: 4px 6px;
+    font-size: 0.85rem;
+  }
+
+  .puzzle-controls button {
+    padding: 5px 10px;
+    font-size: 0.85rem;
+  }
+
+  .status-panel {
+    width: 100%;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 0.78rem;
+  }
+
+  .controls-bar {
+    display: none;
+  }
+
+  .touch-keypad {
+    bottom: 8px;
+    gap: 4px;
+  }
+
+  .keypad-left {
+    left: 8px;
+  }
+
+  .keypad-right {
+    right: 8px;
+  }
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(6, 9, 15, 0.72);
+  backdrop-filter: blur(3px);
+  z-index: 10;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.modal {
+  background: #151c2c;
+  border: 1px solid #2e3d59;
+  border-radius: 12px;
+  padding: 24px 32px;
+  text-align: center;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+}
+
+.solved-box h2 {
+  font-size: 1.8rem;
+  color: #4ade80;
+  margin-bottom: 10px;
+}
+
+.solved-box p {
+  color: #cbd5e1;
+  margin-bottom: 18px;
+}
+
+.controls-bar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 18px;
+  padding: 8px 14px;
+  background: #121826;
+  border-top: 1px solid #243047;
+  font-size: 0.8rem;
+  color: #9fb0cc;
+}
+
+.controls-bar strong {
+  color: #e6edf7;
+}
