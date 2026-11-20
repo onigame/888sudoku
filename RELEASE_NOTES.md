@@ -1,5 +1,8 @@
 # Release Notes
 
+## v1.5.0 (2026-11-20)
+- **Cursor Wraparound**: `Q`, `W`, `E`, `A`, `S`, `D` navigation (both keyboard and on-screen keypad) now wraps around to the opposite side when moving past an edge of the 8×8×8 cube.
+
 ## v1.4.0 (2026-11-20)
 - **Reset Puzzle**: Added a "Reset" button next to "Load" with a confirmation modal dialog that erases all user entries, candidates, and solved status for the current puzzle.
 

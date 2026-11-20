@@ -1,6 +1,6 @@
 # Formal Specifications: 8x8x8 3D Sudoku Webapp
 
-**Current Version:** 1.4.0
+**Current Version:** 1.5.0
 
 ## 1. Overview
 A web application for generating, caching, and solving 8×8×8 3D Sudoku puzzles.
@@ -76,8 +76,8 @@ A web application for generating, caching, and solving 8×8×8 3D Sudoku puzzles
   - **`1`–`8`**: In Entry mode, sets the digit in the cursor cell and clears its candidates; in Candidate mode, clears any user entry and toggles the digit in the cell's candidate set (ignored if cell is a given).
   - **`X` / `Backspace` / `Delete` / `0` / `Space`**: Clears both user entry and candidates in the cursor cell (ignored if cell is a given).
   - **`C`**: 1-layer Undo/Redo for the most recent cell edit.
-  - **`W` / `A` / `S` / `D`**: Moves cursor 1 step within the active plane in the axis direction closest to screen up / left / down / right.
-  - **`Q` / `E`**: Moves cursor 1 step along the axis perpendicular to the active plane (`Q` = toward left of canvas, `E` = toward right of canvas, with closer/farther fallback when purely vertical). The bottom legend dynamically displays `Q (Closer) / E (Farther)` or `Q (Farther) / E (Closer)`.
+  - **`W` / `A` / `S` / `D`**: Moves cursor 1 step within the active plane in the axis direction closest to screen up / left / down / right (wraps around at grid edges).
+  - **`Q` / `E`**: Moves cursor 1 step along the axis perpendicular to the active plane (`Q` = toward left of canvas, `E` = toward right of canvas, with closer/farther fallback when purely vertical; wraps around at grid edges). The bottom legend dynamically displays `Q (Closer) / E (Farther)` or `Q (Farther) / E (Closer)`.
   - **On-Screen Keypads**: Responsive lower-left (`Q W E / A S D / Z X C`) and lower-right (`1 2 3 / 4 5 6 / 7 8 0`) 3×3 touch keypads for mobile/tablet play.
 - **Constraint Counter & Win State**:
   - Live counter showing how many of the 256 constraints are currently incorrect (0 to 256).

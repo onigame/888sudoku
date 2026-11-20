@@ -932,9 +932,9 @@
 
     candidates.sort((a, b) => b.score - a.score);
     const best = candidates[0].vec;
-    cursor.x = Math.max(0, Math.min(7, cursor.x + best.x));
-    cursor.y = Math.max(0, Math.min(7, cursor.y + best.y));
-    cursor.z = Math.max(0, Math.min(7, cursor.z + best.z));
+    cursor.x = (cursor.x + best.x + 8) % 8;
+    cursor.y = (cursor.y + best.y + 8) % 8;
+    cursor.z = (cursor.z + best.z + 8) % 8;
     render();
   }
 
@@ -953,10 +953,7 @@
     const activePlane = getActivePlane(cam);
     const stepQ = getPerpendicularStepQ(cam, activePlane);
     const step = moveRight ? -stepQ : stepQ;
-    cursor[activePlane.fixedAxis] = Math.max(
-      0,
-      Math.min(7, cursor[activePlane.fixedAxis] + step)
-    );
+    cursor[activePlane.fixedAxis] = (cursor[activePlane.fixedAxis] + step + 8) % 8;
     render();
   }
 
