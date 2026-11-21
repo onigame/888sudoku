@@ -9,25 +9,38 @@
 <body>
   <header class="topbar">
     <div class="brand">
-      <h1>8×8×8 3D Sudoku <small class="version-tag">v1.5.0</small></h1>
-      <span id="solved-badge" class="badge hidden">Solved</span>
+      <h1>8×8×8 3D Sudoku <a href="release-notes.php" target="_blank" rel="noopener noreferrer" class="version-tag" title="View Release Notes">v1.10.1</a></h1>
     </div>
 
     <form id="puzzle-form" class="puzzle-controls">
       <label for="puzzle-input">Puzzle #</label>
-      <input id="puzzle-input" type="number" min="1" max="2147483647" value="1" required />
+      <div class="spinner-wrap">
+        <input id="puzzle-input" type="number" min="1" max="2147483647" value="1" required />
+        <div class="spinner-btns">
+          <button id="puzzle-up-btn" type="button" title="Previous puzzle (-1)" aria-label="Decrement puzzle number">▲</button>
+          <button id="puzzle-down-btn" type="button" title="Next puzzle (+1)" aria-label="Increment puzzle number">▼</button>
+        </div>
+      </div>
       <button type="submit">Load</button>
       <button id="reset-btn" type="button" class="btn-danger">Reset</button>
     </form>
 
     <div class="status-panel">
-      <div class="counter">
-        Incorrect Constraints: <strong id="invalid-count">—</strong> / 256
-      </div>
       <div id="plane-info" class="plane-info">Active Plane: XY (Z=1)</div>
       <div id="mode-indicator" class="mode-pill">Mode: Entry</div>
     </div>
   </header>
+
+  <div class="progress-bar">
+    <span id="solved-badge" class="badge hidden">Solved</span>
+    <div class="counter">
+      Unsatisfied Constraints: <strong id="invalid-count">—</strong> / 256
+    </div>
+    <div class="empty-counter">
+      Empty Cells: <strong id="empty-cells">—</strong>
+    </div>
+    <button id="assist-btn" type="button" class="assist-btn">Assistance: Off</button>
+  </div>
 
   <main class="stage">
     <canvas id="cube-canvas"></canvas>

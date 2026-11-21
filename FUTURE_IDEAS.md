@@ -4,10 +4,7 @@ Ideas for enhancing the 8x8x8 Sudoku solver experience in future iterations:
 
 1. **Auto-Remove Candidates**:
    - Automatically remove matching candidate marks from cells in the same row, column, shaft, or 2x2x2 region when a digit is entered.
-2. **Conflict & Error Highlighting**:
-   - Highlight duplicate digits in red within the active row/column/shaft/region.
-   - Optional "Show Incorrect Constraints" overlay that highlights which specific rows, columns, shafts, or 2x2x2 regions are currently invalid or have duplicates.
-3. **Digit Highlighting**:
+2. **Digit Highlighting**:
    - Clicking or hovering a digit (or pressing a modifier + 1–8) highlights all occurrences of that digit across the entire 8x8x8 cube.
 4. **Multi-Step Undo / Redo History**:
    - Expand from 1-layer undo/redo to a full multi-step history stack (`Ctrl+Z` / `Ctrl+Y`).

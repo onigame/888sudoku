@@ -29,6 +29,44 @@ body {
   flex-wrap: wrap;
 }
 
+.progress-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 6px 18px;
+  background: #0f1522;
+  border-bottom: 1px solid #243047;
+  font-size: 0.88rem;
+  flex-wrap: wrap;
+}
+
+.empty-counter strong {
+  color: #e6edf7;
+  font-variant-numeric: tabular-nums;
+}
+
+.assist-btn {
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid #334155;
+  background: #1e293b;
+  color: #cbd5e1;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.assist-btn:hover {
+  border-color: #64748b;
+}
+
+.assist-btn.active {
+  background: rgba(250, 204, 21, 0.16);
+  color: #fde047;
+  border-color: rgba(250, 204, 21, 0.6);
+}
+
 .brand {
   display: flex;
   align-items: center;
@@ -46,6 +84,13 @@ body {
   font-weight: 500;
   color: #9fb0cc;
   margin-left: 4px;
+  text-decoration: none;
+  border-bottom: 1px dotted #64748b;
+}
+
+.version-tag:hover {
+  color: #38bdf8;
+  border-bottom-color: #38bdf8;
 }
 
 .badge {
@@ -69,14 +114,58 @@ body {
   color: #9fb0cc;
 }
 
-.puzzle-controls input {
-  width: 96px;
-  padding: 5px 8px;
+.spinner-wrap {
+  display: inline-flex;
+  align-items: stretch;
   border-radius: 6px;
   border: 1px solid #32425e;
   background: #0b0f17;
+  overflow: hidden;
+}
+
+.puzzle-controls input {
+  width: 74px;
+  padding: 5px 8px;
+  border: none;
+  background: transparent;
   color: #e6edf7;
   font-size: 0.9rem;
+  -moz-appearance: textfield;
+}
+
+.puzzle-controls input::-webkit-outer-spin-button,
+.puzzle-controls input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.puzzle-controls input:focus {
+  outline: none;
+}
+
+.spinner-btns {
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid #32425e;
+}
+
+.puzzle-controls .spinner-btns button {
+  padding: 0 6px;
+  height: 50%;
+  border-radius: 0;
+  background: #182235;
+  color: #cbd5e1;
+  font-size: 0.55rem;
+  line-height: 1;
+}
+
+.puzzle-controls .spinner-btns button:hover {
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.puzzle-controls .spinner-btns button:first-child {
+  border-bottom: 1px solid #32425e;
 }
 
 .puzzle-controls button,

@@ -1,6 +1,6 @@
 # Formal Specifications: 8x8x8 3D Sudoku Webapp
 
-**Current Version:** 1.5.0
+**Current Version:** 1.10.1
 
 ## 1. Overview
 A web application for generating, caching, and solving 8×8×8 3D Sudoku puzzles.
@@ -56,7 +56,7 @@ A web application for generating, caching, and solving 8×8×8 3D Sudoku puzzles
   - Given digits and user-entered digits are visually distinct; digits outside the active plane are rendered near background opacity.
   - Candidate marks render in yellow at 60% of normal digit size as a single numerically sorted string centered in the cell.
 - **Inset Views**:
-  - **Upper-Left (2×2×2 Region Inset)**: Perspective-projected copy of the 2×2×2 region containing the cursor at the same orientation and scale as the main grid, with full-opacity outer 12 edges, low-opacity interior edges, and full-opacity digits/candidates.
+  - **Upper-Left (2×2×2 Region Inset)**: Perspective-projected copy of the 2×2×2 region containing the cursor at the same orientation and scale as the main grid, with full-opacity outer 12 edges, low-opacity interior edges, full 1×1×1 sub-cube yellow shading on the cursor cell and cyan shading on its two in-plane row/column neighbor cells, full-opacity digits/candidates for active-plane cells, and 80% opacity for off-plane cells.
   - **Upper-Right (Perpendicular Shaft Inset)**: Perspective-projected 2/5-scale copy of the 8-cell shaft perpendicular to the active plane at the same orientation, with a single low-opacity connecting line, full-opacity digits/candidates, and cyan dots for empty cells without candidates.
 - **Camera**:
   - Orbit camera with longitude (`lon`) and latitude (`lat` clamped to $(-90^\circ, +90^\circ)$).
@@ -79,6 +79,9 @@ A web application for generating, caching, and solving 8×8×8 3D Sudoku puzzles
   - **`W` / `A` / `S` / `D`**: Moves cursor 1 step within the active plane in the axis direction closest to screen up / left / down / right (wraps around at grid edges).
   - **`Q` / `E`**: Moves cursor 1 step along the axis perpendicular to the active plane (`Q` = toward left of canvas, `E` = toward right of canvas, with closer/farther fallback when purely vertical; wraps around at grid edges). The bottom legend dynamically displays `Q (Closer) / E (Farther)` or `Q (Farther) / E (Closer)`.
   - **On-Screen Keypads**: Responsive lower-left (`Q W E / A S D / Z X C`) and lower-right (`1 2 3 / 4 5 6 / 7 8 0`) 3×3 touch keypads for mobile/tablet play.
-- **Constraint Counter & Win State**:
-  - Live counter showing how many of the 256 constraints are currently incorrect (0 to 256).
-  - When the counter reaches `0`, record puzzle as solved in `localStorage` and display a "Solved!" pop-up modal.
+- **Progress Bar, Assistance Mode, Constraint Counter & Win State**:
+  - Second bar below the top bar displaying the `Solved` badge (when solved), live Unsatisfied Constraints counter (`0` to `256`), Empty Cells counter (`<A>+<B>/<C>`, where `<A>` is empty cells with no notes, `<B>` is empty cells with notes, and `<C>` is total starting empty cells), and an **Assistance** toggle button.
+  - When **Assistance Mode** is enabled:
+    - Displays unplaced digits (in 60%-size yellow note font) for the two active-plane rows containing the cursor outside the cube on the end closer to the camera, for the perpendicular shaft under the upper-right inset, and for the 2×2×2 region under the upper-left inset.
+    - Highlights duplicate-digit errors (ignoring notes) by turning the outermost line segments on both ends of any duplicate row/column in the active plane red, turning the upper-right inset red if the perpendicular shaft has duplicates, and turning the upper-left inset's outer borders red if the 2×2×2 region has duplicates.
+  - When the Unsatisfied Constraints counter reaches `0`, record puzzle as solved in `localStorage` and display a "Solved!" pop-up modal.

@@ -5,7 +5,11 @@
   const ctx = canvas.getContext('2d');
   const puzzleForm = document.getElementById('puzzle-form');
   const puzzleInput = document.getElementById('puzzle-input');
+  const puzzleUpBtn = document.getElementById('puzzle-up-btn');
+  const puzzleDownBtn = document.getElementById('puzzle-down-btn');
   const invalidCountEl = document.getElementById('invalid-count');
+  const emptyCellsEl = document.getElementById('empty-cells');
+  const assistBtn = document.getElementById('assist-btn');
   const counterWrapper = invalidCountEl.closest('.counter');
   const planeInfoEl = document.getElementById('plane-info');
   const depthLegendEl = document.getElementById('depth-legend');
@@ -32,6 +36,7 @@
   let isSolved = false;
   let baseCandidateMode = false;
   let shiftHeld = false;
+  let assistanceMode = false;
   let lastEdit = null;
 
   function isCandidateMode() {
@@ -214,6 +219,23 @@
   }
 
   function updateStatus(triggerFanfare = false) {
+    let emptyNoNotes = 0;
+    let emptyWithNotes = 0;
+    let totalStartingEmpty = 0;
+    for (let i = 0; i < 512; i++) {
+      if (givens[i] === 0) {
+        totalStartingEmpty++;
+        if (entries[i] === 0) {
+          if (candidates[i] === 0) {
+            emptyNoNotes++;
+          } else {
+            emptyWithNotes++;
+          }
+        }
+      }
+    }
+    emptyCellsEl.textContent = `${emptyNoNotes}+${emptyWithNotes}/${totalStartingEmpty}`;
+
     const invalid = countInvalidConstraints();
     invalidCountEl.textContent = String(invalid);
     if (invalid === 0) {
@@ -552,6 +574,49 @@
     }
     ctx.stroke();
 
+    // 3b. In Assistance Mode, highlight outermost segments of any row/col in the active plane with duplicate digits
+    if (assistanceMode) {
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = '#ef4444';
+      ctx.beginPath();
+
+      // Check all 8 u-rows (fixed v in 0..7, varying u in 0..7)
+      for (let v = 0; v < 8; v++) {
+        const lineVals = [];
+        for (let u = 0; u < 8; u++) {
+          const c = planeCellCoords(activePlane, u, v);
+          lineVals.push(getCellValue(c.x, c.y, c.z));
+        }
+        if (analyzeGroup(lineVals).hasDuplicate) {
+          for (const uEdge of [0, 8]) {
+            const pA = project(planeCornerPoint(activePlane, uEdge, v), cam);
+            const pB = project(planeCornerPoint(activePlane, uEdge, v + 1), cam);
+            ctx.moveTo(pA.x, pA.y);
+            ctx.lineTo(pB.x, pB.y);
+          }
+        }
+      }
+
+      // Check all 8 v-columns (fixed u in 0..7, varying v in 0..7)
+      for (let u = 0; u < 8; u++) {
+        const lineVals = [];
+        for (let v = 0; v < 8; v++) {
+          const c = planeCellCoords(activePlane, u, v);
+          lineVals.push(getCellValue(c.x, c.y, c.z));
+        }
+        if (analyzeGroup(lineVals).hasDuplicate) {
+          for (const vEdge of [0, 8]) {
+            const pA = project(planeCornerPoint(activePlane, u, vEdge), cam);
+            const pB = project(planeCornerPoint(activePlane, u + 1, vEdge), cam);
+            ctx.moveTo(pA.x, pA.y);
+            ctx.lineTo(pB.x, pB.y);
+          }
+        }
+      }
+
+      ctx.stroke();
+    }
+
     // 4. Render all non-zero digits and candidate strings back-to-front, always 2D facing the user
     const digitItems = [];
     for (let z = 0; z < 8; z++) {
@@ -629,7 +694,42 @@
       ctx.fillText(String(item.val), item.sx, item.sy);
     }
 
-    renderRegionInset(cam);
+    // 4b. In Assistance Mode, show unplaced digits for the two in-plane rows containing the cursor
+    if (assistanceMode) {
+      const uRowVals = [];
+      for (let u = 0; u < 8; u++) {
+        const c = planeCellCoords(activePlane, u, cursorV);
+        uRowVals.push(getCellValue(c.x, c.y, c.z));
+      }
+      const uUnplaced = analyzeGroup(uRowVals).unplaced;
+      if (uUnplaced) {
+        const pNeg = project(planeCellCenterPoint(activePlane, -1, cursorV), cam);
+        const pPos = project(planeCellCenterPoint(activePlane, 8, cursorV), cam);
+        const target = pNeg.vz <= pPos.vz ? pNeg : pPos;
+        const size = Math.max(11, Math.min(26, (cam.focal / target.vz) * 0.48)) * 0.6;
+        ctx.font = `600 ${size.toFixed(1)}px system-ui, sans-serif`;
+        ctx.fillStyle = '#facc15';
+        ctx.fillText(uUnplaced, target.x, target.y);
+      }
+
+      const vColVals = [];
+      for (let v = 0; v < 8; v++) {
+        const c = planeCellCoords(activePlane, cursorU, v);
+        vColVals.push(getCellValue(c.x, c.y, c.z));
+      }
+      const vUnplaced = analyzeGroup(vColVals).unplaced;
+      if (vUnplaced) {
+        const pNeg = project(planeCellCenterPoint(activePlane, cursorU, -1), cam);
+        const pPos = project(planeCellCenterPoint(activePlane, cursorU, 8), cam);
+        const target = pNeg.vz <= pPos.vz ? pNeg : pPos;
+        const size = Math.max(11, Math.min(26, (cam.focal / target.vz) * 0.48)) * 0.6;
+        ctx.font = `600 ${size.toFixed(1)}px system-ui, sans-serif`;
+        ctx.fillStyle = '#facc15';
+        ctx.fillText(vUnplaced, target.x, target.y);
+      }
+    }
+
+    renderRegionInset(cam, activePlane);
     renderShaftInset(cam, activePlane);
 
     const stepQ = getPerpendicularStepQ(cam, activePlane);
@@ -637,6 +737,35 @@
     depthLegendEl.innerHTML = qIsCloser
       ? '<strong>Move Depth:</strong> Q (Closer) / E (Farther)'
       : '<strong>Move Depth:</strong> Q (Farther) / E (Closer)';
+  }
+
+  function analyzeGroup(vals) {
+    const counts = new Uint8Array(9);
+    for (let i = 0; i < vals.length; i++) {
+      const v = vals[i];
+      if (v >= 1 && v <= 8) counts[v]++;
+    }
+    let unplaced = '';
+    let hasDuplicate = false;
+    for (let d = 1; d <= 8; d++) {
+      if (counts[d] === 0) unplaced += d;
+      else if (counts[d] > 1) hasDuplicate = true;
+    }
+    return { unplaced, hasDuplicate };
+  }
+
+  function planeCornerPoint(plane, uEdge, vEdge) {
+    const fixedCoord = plane.fixedVal - 3.5;
+    if (plane.name === 'XY') return { x: uEdge - 4, y: vEdge - 4, z: fixedCoord };
+    if (plane.name === 'XZ') return { x: uEdge - 4, y: fixedCoord, z: vEdge - 4 };
+    return { x: fixedCoord, y: uEdge - 4, z: vEdge - 4 };
+  }
+
+  function planeCellCenterPoint(plane, uIdx, vIdx) {
+    const fixedCoord = plane.fixedVal - 3.5;
+    if (plane.name === 'XY') return { x: uIdx - 3.5, y: vIdx - 3.5, z: fixedCoord };
+    if (plane.name === 'XZ') return { x: uIdx - 3.5, y: fixedCoord, z: vIdx - 3.5 };
+    return { x: fixedCoord, y: uIdx - 3.5, z: vIdx - 3.5 };
   }
 
   function projectInset(offset, centerX, centerY, scaleFactor, cam) {
@@ -651,7 +780,7 @@
     };
   }
 
-  function renderRegionInset(cam) {
+  function renderRegionInset(cam, activePlane) {
     const scale = cam.focal / camera.distance;
     const pad = Math.min(cam.width, cam.height) * 0.03 + 1.85 * scale;
     const cx = pad;
@@ -660,6 +789,78 @@
     const bx = cursor.x >> 1;
     const by = cursor.y >> 1;
     const bz = cursor.z >> 1;
+
+    const regionVals = [];
+    for (let dz = 0; dz < 2; dz++) {
+      for (let dy = 0; dy < 2; dy++) {
+        for (let dx = 0; dx < 2; dx++) {
+          regionVals.push(getCellValue(bx * 2 + dx, by * 2 + dy, bz * 2 + dz));
+        }
+      }
+    }
+    const regionInfo = analyzeGroup(regionVals);
+    const regionError = assistanceMode && regionInfo.hasDuplicate;
+
+    // Shade the entire 1x1x1 sub-cube for the cursor cell (yellow) and its 2 in-plane row/col neighbors (cyan)
+    const shadedCubes = [];
+    for (let dz = 0; dz < 2; dz++) {
+      for (let dy = 0; dy < 2; dy++) {
+        for (let dx = 0; dx < 2; dx++) {
+          const gx = bx * 2 + dx;
+          const gy = by * 2 + dy;
+          const gz = bz * 2 + dz;
+          const inPlane =
+            (activePlane.name === 'XY' && gz === cursor.z) ||
+            (activePlane.name === 'XZ' && gy === cursor.y) ||
+            (activePlane.name === 'YZ' && gx === cursor.x);
+          if (!inPlane) continue;
+
+          const isCursor = gx === cursor.x && gy === cursor.y && gz === cursor.z;
+          const isRowOrCol =
+            (activePlane.name === 'XY' && (gx === cursor.x || gy === cursor.y)) ||
+            (activePlane.name === 'XZ' && (gx === cursor.x || gz === cursor.z)) ||
+            (activePlane.name === 'YZ' && (gy === cursor.y || gz === cursor.z));
+          if (!isCursor && !isRowOrCol) continue;
+
+          const ox = dx - 0.5;
+          const oy = dy - 0.5;
+          const oz = dz - 0.5;
+          const centerProj = projectInset({ x: ox, y: oy, z: oz }, cx, cy, 1, cam);
+          shadedCubes.push({ ox, oy, oz, isCursor, vz: centerProj.vz });
+        }
+      }
+    }
+
+    shadedCubes.sort((a, b) => b.vz - a.vz);
+
+    const cubeFaces = [
+      { n: { x: 1, y: 0, z: 0 }, c: [[0.5, -0.5, -0.5], [0.5, 0.5, -0.5], [0.5, 0.5, 0.5], [0.5, -0.5, 0.5]] },
+      { n: { x: -1, y: 0, z: 0 }, c: [[-0.5, -0.5, -0.5], [-0.5, -0.5, 0.5], [-0.5, 0.5, 0.5], [-0.5, 0.5, -0.5]] },
+      { n: { x: 0, y: 1, z: 0 }, c: [[-0.5, 0.5, -0.5], [-0.5, 0.5, 0.5], [0.5, 0.5, 0.5], [0.5, 0.5, -0.5]] },
+      { n: { x: 0, y: -1, z: 0 }, c: [[-0.5, -0.5, -0.5], [0.5, -0.5, -0.5], [0.5, -0.5, 0.5], [-0.5, -0.5, 0.5]] },
+      { n: { x: 0, y: 0, z: 1 }, c: [[-0.5, -0.5, 0.5], [0.5, -0.5, 0.5], [0.5, 0.5, 0.5], [-0.5, 0.5, 0.5]] },
+      { n: { x: 0, y: 0, z: -1 }, c: [[-0.5, -0.5, -0.5], [-0.5, 0.5, -0.5], [0.5, 0.5, -0.5], [0.5, -0.5, -0.5]] }
+    ];
+
+    for (const sc of shadedCubes) {
+      ctx.fillStyle = sc.isCursor ? 'rgba(250, 204, 21, 0.28)' : 'rgba(56, 189, 248, 0.14)';
+      ctx.strokeStyle = sc.isCursor ? 'rgba(253, 224, 71, 0.65)' : 'rgba(125, 211, 252, 0.30)';
+      ctx.lineWidth = sc.isCursor ? 1.2 : 0.8;
+
+      for (const face of cubeFaces) {
+        if (dot(face.n, cam.forward) >= 0) continue; // only front-facing faces
+        ctx.beginPath();
+        for (let i = 0; i < 4; i++) {
+          const [fx, fy, fz] = face.c[i];
+          const pt = projectInset({ x: sc.ox + fx, y: sc.oy + fy, z: sc.oz + fz }, cx, cy, 1, cam);
+          if (i === 0) ctx.moveTo(pt.x, pt.y);
+          else ctx.lineTo(pt.x, pt.y);
+        }
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+      }
+    }
 
     // Interior grid lines at low opacity
     ctx.lineWidth = 1;
@@ -686,9 +887,9 @@
     }
     ctx.stroke();
 
-    // Outside 12 edges at full opacity
+    // Outside 12 edges at full opacity (red if Assistance Mode detects duplicate in region)
     ctx.lineWidth = 1.6;
-    ctx.strokeStyle = 'rgba(226, 232, 240, 0.95)';
+    ctx.strokeStyle = regionError ? 'rgba(239, 68, 68, 0.95)' : 'rgba(226, 232, 240, 0.95)';
     ctx.beginPath();
     for (const a of [-1, 1]) {
       for (const b of [-1, 1]) {
@@ -727,11 +928,16 @@
 
           const p = projectInset({ x: dx - 0.5, y: dy - 0.5, z: dz - 0.5 }, cx, cy, 1, cam);
           const isCursor = gx === cursor.x && gy === cursor.y && gz === cursor.z;
+          const inPlane =
+            (activePlane.name === 'XY' && gz === cursor.z) ||
+            (activePlane.name === 'XZ' && gy === cursor.y) ||
+            (activePlane.name === 'YZ' && gx === cursor.x);
           items.push({
             val,
             candText: candMask !== 0 ? formatCandidates(candMask) : '',
             isGiven: g !== 0,
             isCursor,
+            inPlane,
             sx: p.x,
             sy: p.y,
             vz: p.vz
@@ -744,6 +950,7 @@
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     for (const item of items) {
+      ctx.globalAlpha = item.inPlane ? 1 : 0.8;
       const baseFontSize = Math.max(11, Math.min(26, (cam.focal / item.vz) * 0.48));
       if (item.val === 0) {
         const candSize = baseFontSize * 0.6;
@@ -761,6 +968,14 @@
       }
       ctx.fillText(String(item.val), item.sx, item.sy);
     }
+    ctx.globalAlpha = 1;
+
+    if (assistanceMode && regionInfo.unplaced) {
+      const labelSize = Math.max(11, Math.min(26, scale * 0.48)) * 0.6;
+      ctx.font = `600 ${labelSize.toFixed(1)}px system-ui, sans-serif`;
+      ctx.fillStyle = '#facc15';
+      ctx.fillText(regionInfo.unplaced, cx, cy + 1.85 * scale + 12);
+    }
   }
 
   function renderShaftInset(cam, activePlane) {
@@ -771,17 +986,27 @@
     const cy = pad;
     const n = activePlane.normal;
 
+    const shaftVals = [];
+    for (let i = 0; i < 8; i++) {
+      const gx = activePlane.fixedAxis === 'x' ? i : cursor.x;
+      const gy = activePlane.fixedAxis === 'y' ? i : cursor.y;
+      const gz = activePlane.fixedAxis === 'z' ? i : cursor.z;
+      shaftVals.push(getCellValue(gx, gy, gz));
+    }
+    const shaftInfo = analyzeGroup(shaftVals);
+    const shaftError = assistanceMode && shaftInfo.hasDuplicate;
+
     // Single low-opacity line connecting the shaft positions
     const startPt = projectInset({ x: -3.5 * n.x, y: -3.5 * n.y, z: -3.5 * n.z }, cx, cy, shaftScaleFactor, cam);
     const endPt = projectInset({ x: 3.5 * n.x, y: 3.5 * n.y, z: 3.5 * n.z }, cx, cy, shaftScaleFactor, cam);
     ctx.lineWidth = 1.5;
-    ctx.strokeStyle = 'rgba(148, 163, 184, 0.35)';
+    ctx.strokeStyle = shaftError ? 'rgba(239, 68, 68, 0.7)' : 'rgba(148, 163, 184, 0.35)';
     ctx.beginPath();
     ctx.moveTo(startPt.x, startPt.y);
     ctx.lineTo(endPt.x, endPt.y);
     ctx.stroke();
 
-    // Digits, candidate strings, and cyan dots for empty cells along the shaft at full opacity
+    // Digits, candidate strings, and cyan (or red on duplicate) dots for empty cells along the shaft
     const items = [];
     for (let i = 0; i < 8; i++) {
       const gx = activePlane.fixedAxis === 'x' ? i : cursor.x;
@@ -812,7 +1037,7 @@
     ctx.textBaseline = 'middle';
     for (const item of items) {
       if (item.val === 0 && !item.candText) {
-        ctx.fillStyle = '#22d3ee';
+        ctx.fillStyle = shaftError ? '#ef4444' : '#22d3ee';
         ctx.beginPath();
         ctx.arc(item.sx, item.sy, 3.2, 0, Math.PI * 2);
         ctx.fill();
@@ -829,12 +1054,21 @@
       }
 
       ctx.font = `${item.isGiven ? '700' : '500'} ${baseFontSize.toFixed(1)}px system-ui, sans-serif`;
-      if (item.isCursor) {
+      if (shaftError) {
+        ctx.fillStyle = item.isCursor ? '#fca5a5' : '#ef4444';
+      } else if (item.isCursor) {
         ctx.fillStyle = item.isGiven ? '#fef08a' : '#7dd3fc';
       } else {
         ctx.fillStyle = item.isGiven ? '#f8fafc' : '#38bdf8';
       }
       ctx.fillText(String(item.val), item.sx, item.sy);
+    }
+
+    if (assistanceMode && shaftInfo.unplaced) {
+      const labelSize = Math.max(11, Math.min(26, scale * 0.48)) * 0.6;
+      ctx.font = `600 ${labelSize.toFixed(1)}px system-ui, sans-serif`;
+      ctx.fillStyle = '#facc15';
+      ctx.fillText(shaftInfo.unplaced, cx, cy + 1.65 * scale + 12);
     }
   }
 
@@ -1008,7 +1242,7 @@
       entries[idx] = 0;
       candidates[idx] = nextCand;
       saveUserEntries();
-      if (prevEntry !== 0) updateStatus(false);
+      updateStatus(false);
       render();
     } else {
       if (prevEntry === digit && prevCand === 0) return;
@@ -1197,6 +1431,13 @@
     solvedModal.classList.add('hidden');
   });
 
+  assistBtn.addEventListener('click', () => {
+    assistanceMode = !assistanceMode;
+    assistBtn.textContent = assistanceMode ? 'Assistance: On' : 'Assistance: Off';
+    assistBtn.classList.toggle('active', assistanceMode);
+    render();
+  });
+
   resetBtn.addEventListener('click', () => {
     resetMessage.textContent = `Erase all your entries and candidates for Puzzle #${puzzleNumber}?`;
     resetModal.classList.remove('hidden');
@@ -1222,6 +1463,25 @@
     resetModal.classList.add('hidden');
     updateStatus(false);
     render();
+  });
+
+  function stepPuzzleInput(delta) {
+    const cur = parseInt(puzzleInput.value, 10) || 1;
+    const next = Math.max(1, Math.min(2147483647, cur + delta));
+    puzzleInput.value = String(next);
+  }
+
+  puzzleUpBtn.addEventListener('click', () => stepPuzzleInput(-1));
+  puzzleDownBtn.addEventListener('click', () => stepPuzzleInput(1));
+
+  puzzleInput.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      stepPuzzleInput(-1);
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      stepPuzzleInput(1);
+    }
   });
 
   puzzleForm.addEventListener('submit', (e) => {
